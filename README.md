@@ -2,39 +2,25 @@
 
 Misc machine bootstrap notes.
 
-## Claude Code — skip permission prompts via `settings.json`
+## Claude Code — set `skipDangerousModePermissionPrompt`
 
-Add `dangerouslySkipPermissions: true` to your Claude Code settings file so
-every session launches without per-tool permission prompts.
+This suppresses the one-time bypass-permissions confirmation dialog at
+startup. It does **not** silence per-tool permission prompts during a
+session; for that, also set `permissions.defaultMode: "bypassPermissions"`.
 
-**Only do this inside a sandbox / VM / disposable container** — Claude can run
-arbitrary shell commands without asking.
+> Only enable inside a sandbox / VM / disposable container.
 
-### User-level (applies to every project)
+### One-liner — merges the key into `~/.claude/settings.json`
 
-`~/.claude/settings.json`:
+Copy-paste into a shell. Preserves any existing keys; creates the file if it
+doesn't exist.
 
-```json
-{
-  "dangerouslySkipPermissions": true
-}
+```bash
+mkdir -p ~/.claude && python3 -c "import json, os; p = os.path.expanduser('~/.claude/settings.json'); d = json.load(open(p)) if os.path.exists(p) and os.path.getsize(p) else {}; d['skipDangerousModePermissionPrompt'] = True; json.dump(d, open(p, 'w'), indent=2)"
 ```
 
-### Project-level (just this repo)
+Verify:
 
-`.claude/settings.json` at the repo root:
-
-```json
-{
-  "dangerouslySkipPermissions": true
-}
+```bash
+cat ~/.claude/settings.json
 ```
-
-### Notes
-
-- If the file already exists, merge the key in — do **not** overwrite the
-  whole file.
-- Project settings override user settings, so a per-project `false` will
-  re-enable prompts in that one repo.
-- When running as root, also set `IS_SANDBOX=1` in the environment, otherwise
-  Claude Code refuses to honor the flag.
