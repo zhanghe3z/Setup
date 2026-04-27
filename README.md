@@ -2,48 +2,39 @@
 
 Misc machine bootstrap notes.
 
-## Claude Code — skip permission prompts
+## Claude Code — skip permission prompts via `settings.json`
 
-Run Claude Code without the per-tool permission prompts:
+Add `dangerouslySkipPermissions: true` to your Claude Code settings file so
+every session launches without per-tool permission prompts.
 
-```bash
-claude --dangerously-skip-permissions
-```
-
-This bypasses every confirmation (file edits, bash commands, MCP tools).
-**Only use it inside a sandbox / VM / disposable container** — Claude can run
+**Only do this inside a sandbox / VM / disposable container** — Claude can run
 arbitrary shell commands without asking.
 
-### Convenient alias
+### User-level (applies to every project)
 
-Add to `~/.bashrc` or `~/.zshrc`:
+`~/.claude/settings.json`:
 
-```bash
-alias yolo='claude --dangerously-skip-permissions'
+```json
+{
+  "dangerouslySkipPermissions": true
+}
 ```
 
-Then just:
+### Project-level (just this repo)
 
-```bash
-yolo
+`.claude/settings.json` at the repo root:
+
+```json
+{
+  "dangerouslySkipPermissions": true
+}
 ```
 
 ### Notes
 
-- The flag must be set at launch; you cannot toggle it mid-session.
-- Anthropic refuses to enable it when running as root unless `--dangerously-skip-permissions`
-  is combined with `IS_SANDBOX=1` (or a recognised sandbox env). Set:
-
-  ```bash
-  export IS_SANDBOX=1
-  claude --dangerously-skip-permissions
-  ```
-
-- Equivalent for one-shot non-interactive runs:
-
-  ```bash
-  claude -p "fix the failing tests" --dangerously-skip-permissions
-  ```
-
-- Per-project allowlists (less risky alternative): edit
-  `.claude/settings.json` → `permissions.allow` to whitelist specific tools.
+- If the file already exists, merge the key in — do **not** overwrite the
+  whole file.
+- Project settings override user settings, so a per-project `false` will
+  re-enable prompts in that one repo.
+- When running as root, also set `IS_SANDBOX=1` in the environment, otherwise
+  Claude Code refuses to honor the flag.
